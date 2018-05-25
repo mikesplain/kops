@@ -29,7 +29,7 @@ TMP_GOPATH=$(mktemp -d)
 
 "${KOPS_ROOT}/hack/go_install_from_commit.sh" \
   github.com/bazelbuild/bazel-gazelle/cmd/gazelle \
-  8bc6a862933eaa0d7431e15b308ceadc5729a6f9 \
+  7f30ba724af9495b221e2df0f5ac58511179485f \
   "${TMP_GOPATH}"
 
 "${TMP_GOPATH}/bin/gazelle" fix \
