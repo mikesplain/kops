@@ -67,6 +67,7 @@ type LaunchConfiguration struct {
 }
 
 var _ fi.CompareWithID = &LaunchConfiguration{}
+var _ fi.ProducesDeletions = &LaunchConfiguration{}
 
 func (e *LaunchConfiguration) CompareWithID() *string {
 	return e.ID
@@ -172,6 +173,92 @@ func (e *LaunchConfiguration) Find(c *fi.Context) (*LaunchConfiguration, error) 
 	}
 
 	return actual, nil
+}
+
+type deleteLaunchConfiguration struct {
+	launchConfigurationName *string
+}
+
+var _ fi.Deletion = &deleteLaunchConfiguration{}
+
+func (d *deleteLaunchConfiguration) Delete(t fi.Target) error {
+	glog.V(2).Infof("deleting old AutoscalingLaunchConfiguration: %v", fi.DebugAsJsonString(d.launchConfigurationName))
+
+	awsTarget, ok := t.(*awsup.AWSAPITarget)
+	if !ok {
+		return fmt.Errorf("unexpected target type for deletion: %T", t)
+	}
+
+	request := &autoscaling.DeleteLaunchConfigurationInput{
+		LaunchConfigurationName: d.launchConfigurationName,
+	}
+
+	_, err := awsTarget.Cloud.Autoscaling().DeleteLaunchConfiguration(request)
+
+	if err != nil {
+		return fmt.Errorf("error deleting AutoscalingLaunchConfiguration: %v", err)
+	}
+
+	return nil
+}
+
+func (d *deleteLaunchConfiguration) TaskName() string {
+	return "AutoscalingLaunchConfiguration"
+}
+
+func (d *deleteLaunchConfiguration) Item() string {
+	s := fi.StringValue(d.launchConfigurationName)
+
+	return s
+}
+
+func (e *LaunchConfiguration) FindDeletions(c *fi.Context) ([]fi.Deletion, error) {
+	var removals []fi.Deletion
+
+	cloud := c.Cloud.(awsup.AWSCloud)
+
+	request := &autoscaling.DescribeLaunchConfigurationsInput{}
+
+	prefix := *e.Name + "-"
+
+	configurations := map[string]*autoscaling.LaunchConfiguration{}
+	err := cloud.Autoscaling().DescribeLaunchConfigurationsPages(request, func(page *autoscaling.DescribeLaunchConfigurationsOutput, lastPage bool) bool {
+		for _, l := range page.LaunchConfigurations {
+			name := aws.StringValue(l.LaunchConfigurationName)
+			if strings.HasPrefix(name, prefix) {
+				suffix := name[len(prefix):]
+				configurations[suffix] = l
+			}
+		}
+		return true
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error listing AutoscalingLaunchConfiguration: %v", err)
+	}
+
+	if len(configurations) == 0 {
+		return nil, nil
+	}
+
+	var newest *autoscaling.LaunchConfiguration
+	var newestTime int64
+	for _, lc := range configurations {
+		t := lc.CreatedTime.UnixNano()
+		if t > newestTime {
+			newestTime = t
+			newest = lc
+		}
+	}
+
+	for _, lc := range configurations {
+		if lc != newest {
+			removals = append(removals, &deleteLaunchConfiguration{
+				launchConfigurationName: lc.LaunchConfigurationName,
+			})
+		}
+	}
+
+	return removals, nil
 }
 
 func buildEphemeralDevices(instanceTypeName *string) (map[string]*BlockDeviceMapping, error) {
