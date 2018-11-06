@@ -158,7 +158,7 @@
   version = "v1.14.30"
 
 [[projects]]
-  digest = "1:8b019763cb155094c7919d577530604dc070a05315f24b3a2b102a8f9570725f"
+  digest = "1:92daa9bd9f4a03465dc93070dec8123fcd61840bcfbfe687b47d61f09c0e0d90"
   name = "github.com/bazelbuild/bazel-gazelle"
   packages = [
     "cmd/gazelle",
@@ -178,8 +178,8 @@
     "internal/wspace",
   ]
   pruneopts = "UT"
-  revision = "6a1b93cc9b1c7e55e7d05a6d324bcf9d87ea3ab1"
-  version = "0.14.0"
+  revision = "c728ce9f663e2bff26361ba5978ec5c9e6816a3c"
+  version = "0.15.0"
 
 [[projects]]
   digest = "1:331f668c3b6315145093a3b104c1da6be2835a3b1e7c873ad5fba82667330d44"
