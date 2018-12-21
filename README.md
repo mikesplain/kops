@@ -86,13 +86,13 @@ Kubernetes version.
 
 #### Compatibility Matrix
 
-| kops version | k8s 1.8.x | k8s 1.9.x | k8s 1.10.x | k8s 1.11.x | k8s 1.12.x |
-|--------------|-----------|-----------|------------|------------|------------|
-| 1.12.x       | Y         | Y         | Y          | Y          | Y - Alpha  |
-| 1.11.x       | Y         | Y         | Y          | Y          | N          |
-| 1.10.x       | Y         | Y         | Y          | N          | N          |
-| 1.9.x        | Y         | Y         | N          | N          | N          |
-| 1.8.x        | Y         | N         | N          | N          | N          |
+| kops version  | k8s 1.8.x | k8s 1.9.x | k8s 1.10.x | k8s 1.11.x | k8s 1.12.x |
+|---------------|-----------|-----------|------------|------------|------------|
+| 1.12.x - Alpha| Y         | Y         | Y          | Y          | Y         |
+| 1.11.x        | Y         | Y         | Y          | Y          | N          |
+| 1.10.x        | Y         | Y         | Y          | N          | N          |
+~~| 1.9.x         | Y         | Y         | N          | N          | N          |~~
+~~| 1.8.x         | Y         | N         | N          | N          | N          |~~
 
 Use the latest version of kops for all releases of Kubernetes, with the caveat
 that higher versions of Kubernetes are not _officially_ supported by kops.
