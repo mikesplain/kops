@@ -64,6 +64,8 @@ type LoadBalancer struct {
 	ConnectionSettings     *LoadBalancerConnectionSettings
 	CrossZoneLoadBalancing *LoadBalancerCrossZoneLoadBalancing
 	SSLCertificateID       string
+
+	CloudLabels map[string]string
 }
 
 var _ fi.CompareWithID = &LoadBalancer{}
@@ -601,7 +603,14 @@ func (_ *LoadBalancer) RenderAWS(t *awsup.AWSAPITarget, a, e, changes *LoadBalan
 		}
 	}
 
-	if err := t.AddELBTags(loadBalancerName, t.Cloud.BuildTags(e.Name)); err != nil {
+	tags := t.Cloud.BuildTags(e.Name)
+
+	// Apply any user-specified global labels
+	for k, v := range e.CloudLabels {
+		tags[k] = v
+	}
+
+	if err := t.AddELBTags(loadBalancerName, tags); err != nil {
 		return err
 	}
 

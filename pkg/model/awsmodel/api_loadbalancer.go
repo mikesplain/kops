@@ -142,6 +142,8 @@ func (b *APILoadBalancerBuilder) Build(c *fi.ModelBuilderContext) error {
 			ConnectionSettings: &awstasks.LoadBalancerConnectionSettings{
 				IdleTimeout: fi.Int64(int64(idleTimeout.Seconds())),
 			},
+
+			CloudLabels: b.Cluster.Spec.CloudLabels,
 		}
 
 		switch lbSpec.Type {
