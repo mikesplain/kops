@@ -78,8 +78,9 @@ require (
 	github.com/Masterminds/sprig v2.17.1+incompatible
 	github.com/aokoli/goutils v1.0.1 // indirect
 	github.com/aws/aws-sdk-go v1.23.0
-	github.com/bazelbuild/bazel-gazelle v0.0.0-20190227183720-e443c54b396a
-	github.com/bazelbuild/buildtools v0.0.0-20190213131114-55b64c3d2ddf // indirect
+	github.com/bazelbuild/bazel-gazelle v0.18.2-0.20190823151146-67c9ddf12d8a
+	github.com/bazelbuild/rules_docker v0.9.0 // indirect
+	github.com/bazelbuild/rules_go v0.0.0-20190815204319-55dd7eab461b // indirect
 	github.com/blang/semver v3.5.0+incompatible
 	github.com/chai2010/gettext-go v0.0.0-20170215093142-bf70f2a70fb1 // indirect
 	github.com/client9/misspell v0.0.0-20170928000206-9ce5d979ffda
@@ -105,6 +106,7 @@ require (
 	github.com/joho/godotenv v1.2.0 // indirect
 	github.com/jpillora/backoff v0.0.0-20170918002102-8eab2debe79d
 	github.com/jteeuwen/go-bindata v0.0.0-20151023091102-a0ff2567cfb7
+	github.com/kr/pty v1.1.3 // indirect
 	github.com/kubernetes-incubator/apiserver-builder v0.0.0-20180328231559-e809ac2f9f0c // indirect
 	github.com/kubernetes-incubator/reference-docs v0.0.0-20180403034118-8fadf91876cc // indirect
 	github.com/markbates/inflect v0.0.0-20180405204719-fbc6b23ce49e // indirect
