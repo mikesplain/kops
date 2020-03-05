@@ -31,8 +31,8 @@ type VPCCIDRBlock struct {
 	Name      *string
 	Lifecycle *fi.Lifecycle
 
-	VPC       *VPC
-	CIDRBlock *string
+	VPC        *VPC
+	CIDRBlocks *[]string
 
 	// Shared is set if this is a shared VPC
 	Shared *bool
@@ -43,15 +43,44 @@ func (e *VPCCIDRBlock) Find(c *fi.Context) (*VPCCIDRBlock, error) {
 
 	vpcID := e.VPC.ID
 
-	vpc, err := cloud.DescribeVPC(*vpcID)
-	if err != nil {
-		return nil, err
+	request := &ec2.DescribeVpcsInput{}
+
+	if fi.StringValue(vpcID) != "" {
+		request.VpcIds = []*string{vpcID}
+	} else {
+		request.Filters = cloud.BuildFilters(e.Name)
 	}
 
-	actual := &VPCCIDRBlock{
-		CIDRBlock: e.CIDRBlock,
+	response, err := cloud.EC2().DescribeVpcs(request)
+	if err != nil {
+		return nil, fmt.Errorf("error listing VPCs: %v", err)
 	}
-	actual.VPC = &VPC{ID: vpc.VpcId}
+	if response == nil || len(response.Vpcs) == 0 {
+		return nil, nil
+	}
+
+	if vpcID == nil {
+		return nil, nil
+	}
+
+	fmt.Printf("SPLAINDEBUG: %v", response)
+
+	cidrBlockAssociationSets := response.Vpcs[0].CidrBlockAssociationSet
+	var associatedcidrBlocks []string
+
+	for _, cidrBlockAssociationSet := range cidrBlockAssociationSets {
+		state := cidrBlockAssociationSet.CidrBlockState.State
+		cidrblock := cidrBlockAssociationSet.CidrBlock
+
+		if *state == "associated" {
+			associatedcidrBlocks = append(associatedcidrBlocks, *cidrblock)
+			break
+		}
+	}
+
+	actual := &VPCCIDRBlock{}
+	actual.CIDRBlocks = &associatedcidrBlocks
+	actual.VPC = &VPC{ID: response.Vpcs[0].VpcId}
 
 	// Prevent spurious changes
 	actual.Shared = e.Shared
@@ -70,17 +99,9 @@ func (s *VPCCIDRBlock) CheckChanges(a, e, changes *VPCCIDRBlock) error {
 		return fi.RequiredField("VPC")
 	}
 
-	if e.CIDRBlock == nil {
-		return fi.RequiredField("CIDRBlock")
-	}
-
 	if a != nil && changes != nil {
 		if changes.VPC != nil {
 			return fi.CannotChangeField("VPC")
-		}
-
-		if changes.CIDRBlock != nil {
-			return fi.CannotChangeField("CIDRBlock")
 		}
 	}
 
@@ -92,14 +113,14 @@ func (_ *VPCCIDRBlock) RenderAWS(t *awsup.AWSAPITarget, a, e, changes *VPCCIDRBl
 	if shared {
 		// Verify the CIDR block was found.
 		if a == nil {
-			return fmt.Errorf("CIDR block %q not found", fi.StringValue(e.CIDRBlock))
+			return fmt.Errorf("CIDR block %q not found", fi.StringValue(e.CIDRBlocks))
 		}
 	}
 
 	if changes.CIDRBlock != nil {
 		request := &ec2.AssociateVpcCidrBlockInput{
 			VpcId:     e.VPC.ID,
-			CidrBlock: e.CIDRBlock,
+			CidrBlock: e.CIDRBlocks,
 		}
 
 		_, err := t.Cloud.EC2().AssociateVpcCidrBlock(request)
@@ -121,7 +142,7 @@ func (_ *VPCCIDRBlock) RenderTerraform(t *terraform.TerraformTarget, a, e, chang
 	// When this has been enabled please fix test TestAdditionalCIDR in integration_test.go to run runTestAWS.
 	tf := &terraformVPCCIDRBlock{
 		VPCID:     e.VPC.TerraformLink(),
-		CIDRBlock: e.CIDRBlock,
+		CIDRBlock: e.CIDRBlocks,
 	}
 
 	// Terraform 0.12 doesn't support resource names that start with digits. See #7052
@@ -138,7 +159,7 @@ type cloudformationVPCCIDRBlock struct {
 func (_ *VPCCIDRBlock) RenderCloudformation(t *cloudformation.CloudformationTarget, a, e, changes *VPCCIDRBlock) error {
 	cf := &cloudformationVPCCIDRBlock{
 		VPCID:     e.VPC.CloudformationLink(),
-		CIDRBlock: e.CIDRBlock,
+		CIDRBlock: e.CIDRBlocks,
 	}
 
 	return t.RenderResource("AWS::EC2::VPCCidrBlock", *e.Name, cf)

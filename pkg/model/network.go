@@ -87,15 +87,13 @@ func (b *NetworkModelBuilder) Build(c *fi.ModelBuilderContext) error {
 	}
 
 	if !sharedVPC {
-		for _, cidr := range b.Cluster.Spec.AdditionalNetworkCIDRs {
-			c.AddTask(&awstasks.VPCCIDRBlock{
-				Name:      s(cidr),
-				Lifecycle: b.Lifecycle,
-				VPC:       b.LinkToVPC(),
-				Shared:    fi.Bool(sharedVPC),
-				CIDRBlock: &cidr,
-			})
-		}
+		c.AddTask(&awstasks.VPCCIDRBlock{
+			Name:      s(cidr),
+			Lifecycle: b.Lifecycle,
+			VPC:       b.LinkToVPC(),
+			Shared:    fi.Bool(sharedVPC),
+			CIDRBlock: &b.Cluster.Spec.AdditionalNetworkCIDRs,
+		})
 	}
 
 	// TODO: would be good to create these as shared, to verify them
